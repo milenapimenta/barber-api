@@ -1,0 +1,4 @@
+export enum TemplateType {
+  CLIENT_REMINDER = 'CLIENT_REMINDER',
+  CLOSING_NOTICE = 'CLOSING_NOTICE',
+}
