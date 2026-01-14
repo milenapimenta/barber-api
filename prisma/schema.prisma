@@ -1,0 +1,218 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==========================
+// ENUMS
+// ==========================
+enum UserRole {
+  SYSTEM
+  OWNER
+  EMPLOYEE
+}
+
+enum ReminderMode {
+  AUTOMATIC
+  MANUAL
+}
+
+enum TemplateType {
+  CLIENT_REMINDER
+  CLOSING_NOTICE
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  FAILED
+  DELIVERED
+  READ
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  CANCELED
+  DONE
+}
+
+// ==========================
+// MODELS
+// ==========================
+
+model Barbershop {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  settings     BarbershopSettings?
+  users        User[]
+  barbers      Barber[]
+  services     Service[]
+  clients      Client[]
+  templates    MessageTemplate[]
+  reminders    Reminder[]
+  appointments Appointment[]
+}
+
+// --------------------------
+
+model BarbershopSettings {
+  id           String  @id @default(uuid())
+  barbershopId String  @unique
+
+  servicesShared Boolean @default(true)
+  pricesShared   Boolean @default(true)
+  employeeCanSeeClientWhatsapp Boolean @default(false)
+  timezone       String @default("America/Fortaleza")
+
+  barbershop Barbershop @relation(fields: [barbershopId], references: [id])
+}
+
+// --------------------------
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  phone        String   @unique
+  password     String
+  role         UserRole
+  createdAt    DateTime @default(now())
+
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
+}
+
+// --------------------------
+
+model Barber {
+  id           String   @id @default(uuid())
+  name         String
+  phone        String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
+
+  appointments Appointment[]
+  ownedServices Service[]
+}
+
+// --------------------------
+
+model Client {
+  id           String   @id @default(uuid())
+  name         String
+  phone        String
+  createdAt    DateTime @default(now())
+
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
+
+  appointments Appointment[]
+  reminders    Reminder[]
+
+  @@unique([barbershopId, phone])
+}
+
+// --------------------------
+
+model Service {
+  id            String   @id @default(uuid())
+  name          String
+  durationMin   Int
+  price         Decimal @db.Decimal(10,2)
+
+  barbershopId  String
+  barbershop    Barbershop @relation(fields: [barbershopId], references: [id])
+
+  ownerBarberId String?
+  ownerBarber   Barber? @relation(fields: [ownerBarberId], references: [id])
+
+  appointmentServices AppointmentService[]
+}
+
+// --------------------------
+
+model Appointment {
+  id            String   @id @default(uuid())
+  date          DateTime
+  status        AppointmentStatus @default(SCHEDULED)
+
+  barbershopId  String
+  barberId      String
+  clientId      String
+
+  barbershop Barbershop @relation(fields: [barbershopId], references: [id])
+  barber     Barber     @relation(fields: [barberId], references: [id])
+  client     Client     @relation(fields: [clientId], references: [id])
+
+  services AppointmentService[]
+  reminders Reminder[]
+}
+
+// --------------------------
+
+model AppointmentService {
+  id            String   @id @default(uuid())
+
+  appointmentId String
+  serviceId     String
+
+  priceApplied  Decimal @db.Decimal(10,2)
+  durationMin   Int
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+  service     Service     @relation(fields: [serviceId], references: [id])
+
+  @@unique([appointmentId, serviceId])
+}
+
+// --------------------------
+
+model MessageTemplate {
+  id            String       @id @default(uuid())
+  name          String
+  type          TemplateType
+  content       String
+  active        Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+
+  barbershopId  String
+  barbershop    Barbershop @relation(fields: [barbershopId], references: [id])
+
+  reminders Reminder[]
+}
+
+// --------------------------
+
+model Reminder {
+  id            String        @id @default(uuid())
+  sendAt        DateTime
+  mode          ReminderMode
+  status        MessageStatus @default(PENDING)
+  sentAt        DateTime?
+  createdAt     DateTime      @default(now())
+
+  barbershopId  String
+  appointmentId String?
+  clientId      String
+  templateId    String?
+
+  barbershop  Barbershop @relation(fields: [barbershopId], references: [id])
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
+  client      Client @relation(fields: [clientId], references: [id])
+  template    MessageTemplate? @relation(fields: [templateId], references: [id])
+}
