@@ -19,16 +19,16 @@ export class BarbershopsController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.barbershopsService.findOne(+id);
+    return this.barbershopsService.findOne(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateBarbershopDto: UpdateBarbershopDto) {
-    return this.barbershopsService.update(+id, updateBarbershopDto);
+    return this.barbershopsService.update(id, updateBarbershopDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.barbershopsService.remove(+id);
+    return this.barbershopsService.remove(id);
   }
 }

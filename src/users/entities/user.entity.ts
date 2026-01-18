@@ -1,5 +1,6 @@
-import { UserRole } from "@prisma/client";
+
 import { Barbershop } from "src/barbershops/entities/barbershop.entity";
+import { UserRole } from "src/common/enums/user-role.enum";
 
 export class User {
     id: string;

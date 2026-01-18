@@ -8,10 +8,20 @@ import { BarbershopSettingsModule } from './barbershop-settings/barbershop-setti
 import { BarbersModule } from './barbers/barbers.module';
 import { ClientsModule } from './clients/clients.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, UsersModule, BarbershopsModule, BarbershopSettingsModule, BarbersModule, ClientsModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    UsersModule,
+    BarbershopsModule,
+    BarbershopSettingsModule,
+    BarbersModule,
+    ClientsModule,
+    RedisModule
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
