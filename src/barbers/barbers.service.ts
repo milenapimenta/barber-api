@@ -1,10 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBarberDto } from './dto/create-barber.dto';
 import { UpdateBarberDto } from './dto/update-barber.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { REDIS } from 'src/redis/redis.provider';
 import Redis from 'ioredis';
 import { CACHE_KEYS } from 'src/cache/cache.keys';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class BarbersService {
@@ -13,14 +14,27 @@ export class BarbersService {
     @Inject(REDIS) private readonly redis: Redis,
   ) { }
 
-  async create(createBarberDto: CreateBarberDto) {
-    const barbers = await this.prisma.barber.create({
-      data: createBarberDto,
+  async create(dto: CreateBarberDto) {
+    const barbershopExists = await this.prisma.barbershop.findUnique({
+      where: { id: dto.barbershopId },
+      select: { id: true },
     });
 
-    await this.redis.del(CACHE_KEYS.barbers);
+    if (!barbershopExists) {
+      throw new BadRequestException('Barbershop não existe');
+    }
 
-    return barbers;
+    try {
+      const barber = await this.prisma.barber.create({
+        data: dto,
+      });
+
+      await this.redis.del(CACHE_KEYS.barbers);
+
+      return barber;
+    } catch (error) {
+      this.handlePrismaErrors(error);
+    }
   }
 
   async findAll() {
@@ -123,5 +137,25 @@ export class BarbersService {
     await this.redis.del(CACHE_KEYS.barber(id));
 
     return { success: true }
+  }
+
+  private handlePrismaErrors(error: any): never {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        const field = (error.meta?.target as string[])?.[0];
+
+        if (field === 'phone') {
+          throw new ConflictException('Telefone já está em uso');
+        }
+
+        throw new ConflictException('Registro duplicado');
+      }
+
+      if (error.code === 'P2025') {
+        throw new NotFoundException('Registro não encontrado');
+      }
+    }
+
+    throw error;
   }
 }

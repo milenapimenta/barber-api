@@ -98,7 +98,7 @@ model User {
 model Barber {
   id           String   @id @default(uuid())
   name         String
-  phone        String?
+  phone        String   @unique
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
 
