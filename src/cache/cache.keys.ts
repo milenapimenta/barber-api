@@ -4,4 +4,7 @@ export const CACHE_KEYS = {
 
   user: (id: string) => `user:${id}`,
   users: 'users',
+
+  barber: (id: string) => `barber:${id}`,
+  barbers: 'barbers',
 };

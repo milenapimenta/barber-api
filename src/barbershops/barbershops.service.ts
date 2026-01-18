@@ -42,7 +42,7 @@ export class BarbershopsService {
 
       return barbershops;
     } catch (error) {
-      return this.prisma.barbershop.findMany();
+      return await this.prisma.barbershop.findMany();
     }
   }
 
@@ -66,7 +66,7 @@ export class BarbershopsService {
 
       return barbershop;
     } catch (error) {
-      return this.prisma.barbershop.findUnique({
+      return await this.prisma.barbershop.findUnique({
         where: { id },
       });
     }

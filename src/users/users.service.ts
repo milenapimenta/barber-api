@@ -48,7 +48,7 @@ export class UsersService {
 
       return users;
     } catch (error) {
-      return this.prisma.user.findMany();
+      return await this.prisma.user.findMany();
     }
   }
 
@@ -72,7 +72,7 @@ export class UsersService {
 
       return user;
     } catch (error) {
-      return this.prisma.user.findUnique({
+      return await this.prisma.user.findUnique({
         where: { id },
       });
     }
